@@ -1,1 +1,1 @@
-Desenvolvimento de um programa computacional que realize a leitura de uma topologia de rede e execute o algoritmo de otimização de Dijkstra, usando como base de dados a malha rodoviária de conexão entre os municípios do estado de Mato Grosso do Sul.
+Programa computacional que realiza a leitura de uma topologia de rede e executa o algoritmo de otimização de Dijkstra, usando como base de dados a malha rodoviária de conexão entre os municípios do estado de Mato Grosso do Sul.
