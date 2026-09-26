@@ -1,0 +1,205 @@
+#Trabalho feito por: Enzo Costa Beninghufes Blanck
+#                   João Pedro da Silva Azevedo
+
+import csv
+
+# Cores utilizadas na interface do terminal
+VERMELHO = '\033[31m'
+VERDE = '\033[32m'
+RESET = '\033[0m'
+
+
+def leituracsv():
+    matriz = []
+
+    with open('matriz_municipios_ms.csv', 'r', encoding='utf-8') as arquivo:
+        leitor = csv.reader(arquivo)
+
+        for linha in leitor:
+            matriz.append(linha)
+
+    # A primeira linha possui os nomes dos municípios
+    cidades = matriz[0][1:]
+
+    return matriz, cidades
+
+
+def listaArestas(matriz, cidades):
+    arestas = []
+
+    for i in range(1, len(matriz)):
+        for j in range(1, len(matriz[i])):
+
+            if matriz[i][j] != 'inf':
+                origem = cidades[i - 1]
+                destino = cidades[j - 1]
+                distancia = float(matriz[i][j])
+
+                arestas.append([origem, destino, distancia])
+
+    return arestas
+
+
+def leituraCidades(cidades):
+    print("\n[ MUNICÍPIOS DISPONÍVEIS ]")
+    for i in range(0, len(cidades), 5):
+        linha = cidades[i:i+5]
+        print("".join(f"{cidade:<30}" for cidade in linha))
+
+    while True:
+        ponto_partida = input("\nDigite o município de ORIGEM: ").lower().title().strip()
+        destino = input("Digite o município de DESTINO: ").lower().title().strip()
+
+        if ponto_partida in cidades and destino in cidades:
+            return ponto_partida, destino
+
+        print(VERMELHO)
+        print("\n\t---[ERRO] cidade NÃO encontrada : ENTRADA INVÁLIDA [ERRO]---")
+        print("\t\t   DIGITE OS NOMES COMO APARECEM NA LISTA.")
+        print(RESET)
+
+
+def algoritmoDijkstra(arestas, cidades, ponto_partida):
+    distancia = {}
+    # Inicializa todas as distâncias como infinito
+    for cidade in cidades:
+        distancia[cidade] = float('inf')
+
+    # A distância da origem para ela mesma é zero
+    distancia[ponto_partida] = 0
+
+    # Guarda o município anterior de cada vértice
+    antecessor = {}
+
+    for cidade in cidades:
+        antecessor[cidade] = None
+
+    # Conjunto dos municípios já processados
+    visitados = set()
+
+    while len(visitados) < len(cidades):
+
+        menor_distancia = float('inf')
+        cidade_atual = None
+
+        # Procura o município não visitado com menor distância
+        for cidade in cidades:
+
+            if cidade not in visitados and distancia[cidade] < menor_distancia:
+                menor_distancia = distancia[cidade]
+                cidade_atual = cidade
+
+        # Não existem mais municípios alcançáveis
+        if cidade_atual is None:
+            break
+
+        visitados.add(cidade_atual)
+
+        # Verifica as arestas que saem do município atual
+        for aresta in arestas:
+
+            origem = aresta[0]
+            destino = aresta[1]
+            peso = aresta[2]
+
+            if origem == cidade_atual and destino not in visitados:
+
+                nova_distancia = (
+                    distancia[cidade_atual] + peso
+                )
+
+                # Relaxamento da aresta
+                if nova_distancia < distancia[destino]:
+
+                    distancia[destino] = nova_distancia
+                    antecessor[destino] = cidade_atual
+
+    return distancia, antecessor
+
+
+def criarCaminho(antecessor, ponto_partida, destino):
+    caminho = []
+    atual = destino
+
+    # Volta do destino até a origem
+    while atual is not None:
+
+        caminho.append(atual)
+
+        if atual == ponto_partida:
+            break
+
+        atual = antecessor[atual]
+
+    # Não encontrou caminho
+    if caminho[-1] != ponto_partida:
+        return None
+
+    # O caminho foi construído de trás para frente
+    caminho.reverse()
+
+    return caminho
+
+
+def interface(distancia, caminho, ponto_partida, destino):
+    print("\n" + "=" * 80)
+    print("\t\t\tRESULTADO DO DIJKSTRA")
+    print("=" * 80)
+
+    print(f"\n\t\t\t--------[VIAGEM]--------\n\t\tORIGEM [ {ponto_partida} ] -> DESTINO [ {destino} ]")
+
+    if caminho is None:
+        print(VERMELHO)
+        print("\n\t---[ERRO] cidade NÃO encontrada : ENTRADA INVÁLIDA [ERRO]---")
+        print("\t     Não existe um caminho entre os municípios informados.")
+        print(RESET)
+        return
+
+    print(VERDE)
+    print("[PERCURSO] : ", end="")
+
+    for i, cidade in enumerate(caminho):
+
+        if i < len(caminho) - 1:
+            print(f"{cidade.strip()} ->", end=" ")
+        else:
+            print(f"{cidade.strip()}")
+
+    print(f"[DISTÂNCIA PRECORRIDA] : {distancia[destino]:.2f} km")
+    print(RESET)
+    print("=" * 80)
+
+
+def main():
+
+    print("\n")
+    print("=" * 80)
+    print("\t\tJEEJNO MAPS JP&EB - ALGORITMO DE DIJKSTRA")
+    print("=" * 80)
+
+    print("AUTORES    :    João Pedro da Silva Azevedo e \n\t\tEnzo Costa Beninghufes Blanck")
+
+    matriz, cidades = leituracsv()
+    arestas = listaArestas(matriz, cidades)
+
+    while True:
+        
+        ponto_partida, destino = leituraCidades(cidades)
+        distancia, antecessor = algoritmoDijkstra(arestas,cidades,ponto_partida)
+        caminho = criarCaminho(antecessor,ponto_partida,destino)
+                        
+        interface(distancia,caminho,ponto_partida,destino)
+        print(VERDE)
+        print(RESET)
+
+        opcao = input("DESEJA PESQUISAR OUTRO PERCURSO? (s/n): ").upper().strip()
+        if opcao == 'N':
+            print("\n\n\t\t\t\t\t\tEncerrando o programa...\n")
+            break
+        elif opcao != 'S':
+            print("\n\n\t\t\t\tENTRADA INVÁLIDA. Encerrando o programa...\n")
+            break
+
+
+if __name__ == "__main__":
+    main()
